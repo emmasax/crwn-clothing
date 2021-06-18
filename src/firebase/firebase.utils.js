@@ -14,6 +14,22 @@ const config = {
 
 firebase.initializeApp(config);
 
+export const covertCollectionsSnapshotToMap = collections => {
+    const transformedCollection = collections.docs.map(doc => {
+        const { title, items } = doc.data();
+        return {
+            routeName: encodeURI(title.toLowerCase()),
+            id: doc.id,
+            title,
+            items
+        }
+    });
+    return transformedCollection.reduce((acc, collection) => {
+        acc[collection.title.toLowerCase()] = collection;
+        return acc;
+    }, {});
+};
+
 export const auth = firebase.auth();
 export const firestore = firebase.firestore();
 
@@ -49,3 +65,13 @@ export const createUserProfileDocument = async (userAuth, additionalData) => {
 };
 
 export default firebase;
+
+export const addCollectionAndDocuments = async (collectionKey, documentsToAdd) => {
+    const collectionRef = firestore.collection(collectionKey);
+    const batch = firestore.batch();
+    documentsToAdd.forEach(document => {
+        const newDocRef = collectionRef.doc();
+        batch.set(newDocRef, document);
+    });
+    return await batch.commit();
+};
